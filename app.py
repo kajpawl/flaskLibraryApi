@@ -51,5 +51,29 @@ def items():
         return response
 
 
+@app.route('/posts/<int:post_id>')
+def item(post_id):
+    response_data = {
+        'success': True,
+        'data': []
+    }
+
+    # item = ''
+    # for post in POSTS:
+    #     if post['id'] == post_id:
+    #         item = post
+    try:
+        item = [post for post in POSTS if post['id'] == post_id][0]
+    except IndexError:
+        response_data['success'] = False
+        response_data['error'] = 'Not found!'
+        response = jsonify(response_data)
+        response.status_code = 404
+    else:
+        response_data['data'] = item
+        response = jsonify(response_data)
+    return response
+
+
 if __name__ == '__main__':
     app.run(debug=True)
