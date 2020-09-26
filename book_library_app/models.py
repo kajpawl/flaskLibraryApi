@@ -11,7 +11,7 @@ from book_library_app import db
 from book_library_app import Config
 
 
-COMPARISON_OPERATOR_RE = re.compile(r'(.*)\[(gte|gt|lte|lt)\]')
+COMPARISON_OPERATOR_RE = re.compile(r'(.*)\[(gte|gt|lte|lt)]')
 
 
 class Author(db.Model):
@@ -80,19 +80,19 @@ class Author(db.Model):
     def get_pagination(query: BaseQuery) -> Tuple[list, dict]:
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', Config.PER_PAGE, type=int)
-        params = {key: value for key,value in request.args.items() if key != 'page'}
+        params = {key: value for key, value in request.args.items() if key != 'page'}
         paginate_obj = query.paginate(page, limit, False)
         pagination = {
             'total_pages': paginate_obj.pages,
             'total_records': paginate_obj.total,
-            'current_page': url_for('get_authors', page=page, **params)
+            'current_page': url_for('authors.get_authors', page=page, **params)
         }
 
         if paginate_obj.has_next:
-            pagination['next_page'] = url_for('get_authors', page=page+1, **params)
+            pagination['next_page'] = url_for('authors.get_authors', page=page+1, **params)
 
         if paginate_obj.has_prev:
-            pagination['previous_page'] = url_for('get_authors', page=page-1, **params)
+            pagination['previous_page'] = url_for('authors.get_authors', page=page-1, **params)
 
         return paginate_obj.items, pagination
 
