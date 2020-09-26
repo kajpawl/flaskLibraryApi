@@ -61,3 +61,30 @@ def update_book(args: dict, book_id: int):
         'success': True,
         'data': book_schema.dump(book)
     })
+
+
+@books_bp.route('/books/<int:book_id>', methods=['DELETE'])
+def delete_author(book_id):
+    book = Book.query.get_or_404(book_id, description=f'Author with id {book_id} not found.')
+
+    db.session.delete(book)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'data': f'Book with id {book_id} has been deleted'
+    })
+
+
+@books_bp.route('/authors/<int:author_id>/books', methods=['GET'])
+def get_all_author_book(author_id: int):
+    Author.query.get_or_404(author_id, description=f'Author with id {author_id} not found.')
+    books = Book.query.filter(Book.author_id == author_id).all()
+
+    items = BookSchema(many=True, exclude=['author']).dump(books)
+
+    return jsonify({
+        'success': True,
+        'data': items,
+        'number_of_records': len(items)
+    })
