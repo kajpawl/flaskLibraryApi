@@ -14,6 +14,14 @@ class Author(db.Model):
         return f'<{self.__class__.__name__}>: {self.first_name} {self.last_name}'
 
 
+    @staticmethod
+    def get_schema_args(fields: str) -> dict:
+        schema_args = {'many': True}
+        if fields:
+            schema_args['only'] = [field for field in fields.split(',') if field in Author.__table__.columns]
+        return schema_args
+
+
 class AuthorSchema(Schema):
     id = fields.Integer(dump_only=True)
     first_name = fields.String(required=True, validate=validate.Length(max=50))
