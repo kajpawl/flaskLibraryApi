@@ -3,8 +3,8 @@ from webargs.flaskparser import use_args
 
 from book_library_app import db
 from book_library_app.auth import auth_bp
-from book_library_app.models import User, user_schema, UserSchema
-from book_library_app.utils import validate_json_content_type
+from book_library_app.models import User, user_schema, UserSchema, user_password_update_schema
+from book_library_app.utils import validate_json_content_type, token_required
 
 
 @auth_bp.route('/register', methods=['POST'])
@@ -46,4 +46,60 @@ def login(args: dict):
     return jsonify({
         'success': True,
         'token': token.decode()
+    })
+
+
+@auth_bp.route('/me', methods=['GET'])
+@token_required
+def get_current_user(user_id: int):
+    user = User.query.get_or_404(user_id, description=f'User with id {user_id} not found.')
+
+    return jsonify({
+        'success': True,
+        'data': user_schema.dump(user)
+    })
+
+
+@auth_bp.route('/update/password', methods=['PUT'])
+@token_required
+@validate_json_content_type
+@use_args(user_password_update_schema, error_status_code=400)
+def update_user_password(user_id: int, args: dict):
+    user = User.query.get_or_404(user_id, description=f'User with id {user_id} not found.')
+
+    if not user.is_password_valid(args['current_password']):
+        abort(401, description='Invalid password')
+
+    user.password = user.generate_hashed_password(args['new_password'])
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'data': user_schema.dump(user)
+    })
+
+
+@auth_bp.route('/update/data', methods=['PUT'])
+@token_required
+@validate_json_content_type
+@use_args(UserSchema(only=['username', 'email']), error_status_code=400)
+def update_user_data(user_id: int, args: dict):
+    user_with_existing_username = User.query.filter(User.username == args['username']).first()
+    if user_with_existing_username is not None:
+        if user_with_existing_username.id != user_id:
+            abort(409, description=f'User with username {args["username"]} already exists.')
+    user_with_existing_email = User.query.filter(User.email == args['email']).first()
+    if user_with_existing_email is not None:
+        if user_with_existing_email.id != user_id:
+            abort(409, description=f'User with email {args["email"]} already exists.')
+
+    user = User.query.get_or_404(user_id, description=f'User with id {user_id} not found.')
+
+    user.username = args['username']
+    user.email = args['email']
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'data': user_schema.dump(user)
     })
