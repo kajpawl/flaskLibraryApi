@@ -43,6 +43,15 @@ class Book(db.Model):
         return value
 
 
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), nullable=False, unique=True, index=True)
+    email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+    creation_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class AuthorSchema(Schema):
     id = fields.Integer(dump_only=True)
     first_name = fields.String(required=True, validate=validate.Length(max=50))
@@ -71,5 +80,14 @@ class BookSchema(Schema):
             raise ValidationError('ISBN must contain 13 digits.')
 
 
+class UserSchema(Schema):
+    id = fields.Integer(dump_only=True)
+    username = fields.String(required=True, validate=validate.Length(max=250))
+    email = fields.String(required=True, validate=validate.Length(max=250))
+    password = fields.String(required=True, load_only=True, validate=validate.Length(min=6, max=250))
+    creation_date = fields.DateTime(dump_only=True)
+
+
 author_schema = AuthorSchema()
 book_schema = BookSchema()
+user_schema = UserSchema()
